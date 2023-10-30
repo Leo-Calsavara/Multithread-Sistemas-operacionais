@@ -1,10 +1,16 @@
+import java.util.concurrent.Semaphore;
+
+class GlobalVals {
+  static boolean corrida = false;
+  static boolean mutex_flag = true;
+}
+
 class Cliente {
     String nome;
-    int localizacao; // Supondo que localização seja um valor numérico
+    int localizacao;
 
-    public void requererCorrida(int localizacao, Gerenciador gerente) {
+    public void requererCorrida(Gerenciador gerente) {
 		gerente.ChamaMotoristas();
-        // Lógica para requerer uma corrida com a localização fornecida
     }
 }
 
@@ -13,29 +19,39 @@ class Motorista {
     boolean disponivel = true;
 
     public void aceitarCorrida() {
-		if (disponivel){
+        while(GlobalVals.corrida == false); // do nothing
+
+		if (disponivel && GlobalVals.mutex_flag){
 				try {
+                    GlobalVals.mutex_flag = false;
 					this.disponivel = false;
 					System.out.println("Corrida aceita por: " + nome);
 					Thread.sleep(3000);
 			} catch (InterruptedException e) {
-					// Lidar com a exceção, se necessário
-					e.printStackTrace();
+					System.out.println("Deu errado");
 			}
 			this.disponivel = true;
 		} else {
-			System.out.println("Corrida recusada por: " + nome);
+			System.out.println("Corrida recusada por: " + nome);;
 		}
     }
 }
 
 class Gerenciador {
-    Motorista[] vetorMotorista;
+     Motorista[] vetorMotorista;
 
 	public void ChamaMotoristas() {
-		for (int i =0; i < vetorMotorista.length; i++) {
-			vetorMotorista[i].aceitarCorrida();	
-		}
+
+        Thread th1 = new Thread(vetorMotorista[0]::aceitarCorrida);
+		Thread th2 = new Thread(vetorMotorista[1]::aceitarCorrida);
+        Thread th3 = new Thread(vetorMotorista[2]::aceitarCorrida);
+        Thread th4 = new Thread(vetorMotorista[3]::aceitarCorrida);
+
+        th1.start();
+        th2.start();
+        th3.start();
+        th4.start();
+
 	}
 }
 
@@ -46,19 +62,22 @@ class Main {
         cliente.localizacao = (int) (Math.random() * 100); // Localização aleatória
 
         Motorista motorista1 = new Motorista();
-        motorista1.nome = "Alex";
+        motorista1.nome = "SpongeBob";
 
         Motorista motorista2 = new Motorista();
         motorista2.nome = "Barba Negra";
 
 		Motorista motorista3 = new Motorista();
-        motorista3.nome = "Carlos";
-		motorista3.disponivel = false;
+        motorista3.nome = "Sandy";
+
+        Motorista motorista4 = new Motorista();
+        motorista4.nome = "Patrick";
 
         Gerenciador gerenciador = new Gerenciador();
-        gerenciador.vetorMotorista = new Motorista[]{motorista1, motorista2, motorista3};
+        gerenciador.vetorMotorista = new Motorista[]{motorista1, motorista2, motorista3, motorista4};
 
-        // Requerer uma corrida
-        cliente.requererCorrida(cliente.localizacao, gerenciador);
+        cliente.requererCorrida(gerenciador);
+
+        GlobalVals.corrida = true;
     }
 }
