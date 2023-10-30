@@ -1,8 +1,8 @@
 import java.util.concurrent.Semaphore;
 
 class GlobalVals {
-  static boolean corrida = false;
-  static boolean mutex_flag = true;
+  static boolean corrida = false; // Variavel Global para que todas as threads iniciem juntas
+  static boolean mutex_flag = true; // Var Global para que apenas uma thread pegue a corrida
 }
 
 class Cliente {
@@ -19,7 +19,7 @@ class Motorista {
     boolean disponivel = true;
 
     public void aceitarCorrida() {
-        while(GlobalVals.corrida == false); // do nothing
+        while(GlobalVals.corrida == false); // do nothing (espera a variavel ser true)
 
 		if (disponivel && GlobalVals.mutex_flag){
 				try {
@@ -42,8 +42,8 @@ class Gerenciador {
 
 	public void ChamaMotoristas() {
 
-        Thread th1 = new Thread(vetorMotorista[0]::aceitarCorrida);
-		Thread th2 = new Thread(vetorMotorista[1]::aceitarCorrida);
+        Thread th1 = new Thread(vetorMotorista[0]::aceitarCorrida); // Tem que criar cada thread manualmente 
+	Thread th2 = new Thread(vetorMotorista[1]::aceitarCorrida);
         Thread th3 = new Thread(vetorMotorista[2]::aceitarCorrida);
         Thread th4 = new Thread(vetorMotorista[3]::aceitarCorrida);
 
@@ -78,6 +78,6 @@ class Main {
 
         cliente.requererCorrida(gerenciador);
 
-        GlobalVals.corrida = true;
+        GlobalVals.corrida = true; // Todas as threads saem do while dentro de Motorista.aceitarCorrida()
     }
 }
