@@ -41,9 +41,18 @@ class Main {
 }
 
 class Corrida {
+  private Semaphore semaforo = new Semaphore(1);
   boolean espera_threads = false; // Esperar para todas as threads executarem ao mesmo tempo
   boolean corrida_ja_executada = false; // Corrida ja foi feita
   boolean mutex_flag = false; // Alguem ja esta fazendo a corrida
+
+  public void acquire() throws InterruptedException {
+    semaforo.acquire();
+  }
+
+  public void release() {
+    semaforo.release();
+  }
 }
 
 class Cliente {
@@ -62,20 +71,26 @@ class Motorista {
     public void aceitarCorrida(String nome_cliente, Corrida corrida) {
       while(corrida.espera_threads == false); // do nothing
 
-      if (disponivel && !corrida.mutex_flag && !corrida.corrida_ja_executada){
-          try {
-            this.disponivel = false;
-            corrida.mutex_flag = true;
-            corrida.corrida_ja_executada = true;
-            System.out.println("Corrida de " + nome_cliente + " aceita por: " + nome);
-            Thread.sleep(500);
-            } catch (InterruptedException e) {
-            System.out.println("Deu errado");
-          }
-        this.disponivel = true;
-      } else {
-        System.out.println("Corrida de " + nome_cliente + " RECUSADA por: " + nome);;
-      }
+      try {
+        corrida.acquire();
+        if (disponivel && !corrida.mutex_flag && !corrida.corrida_ja_executada){
+            try {
+              this.disponivel = false;
+              corrida.mutex_flag = true;
+              corrida.corrida_ja_executada = true;
+              System.out.println("Corrida de " + nome_cliente + " aceita por: " + nome);
+              Thread.sleep(500);
+              } catch (InterruptedException e) {
+              System.out.println("Deu errado");
+            }
+          this.disponivel = true;
+        } else {
+          System.out.println("Corrida de " + nome_cliente + " RECUSADA por: " + nome);;
+        }
+        corrida.release();
+        } catch (InterruptedException e) {
+          System.out.println("Deu errado");
+        }
     }
 }
 
